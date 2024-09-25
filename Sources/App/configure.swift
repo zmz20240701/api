@@ -7,21 +7,29 @@ import Vapor
 public func configure(_ app: Application) async throws {
     // uncomment to serve files from /Public folder
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-
-app.http.server.configuration.port = 5000
-app.http.server.configuration.hostname = "0.0.0.0"
-
-app.databases.use(DatabaseConfigurationFactory.mysql(
-        hostname: "8.152.6.116",
-        port: 3306,
-        username:"KEN",
-        password: "00000000",
-        database: "testdb"
-        tlsConfiguration: .forClient(certificateVerification: .none)  // 禁用 SSL 证书验证
-    ), as: .mysql)
+    
+    // Configure TLS for the client
+    let tlsConfiguration = TLSConfiguration.forClient(certificateVerification: .none)
+    
+    // Configure the server
+    app.http.server.configuration.port = 5001
+    app.http.server.configuration.hostname = "0.0.0.0"
+    
+    // Configure the MySQL database
+    app.databases.use(
+        .mysql(
+            hostname: "8.152.6.116",
+            port: 3306,
+            username: "KEN",
+            password: "000",
+            database: "testdb",
+            tlsConfiguration: tlsConfiguration  // Apply the TLS configuration here
+        ),
+        as: .mysql
+    )
 
     app.migrations.add(CreateSongs())
-    try await app.autoMigrate().get()
+    try await app.autoMigrate()
     // register routes
     try routes(app)
 }
