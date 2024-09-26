@@ -30,6 +30,8 @@ public func configure(_ app: Application) async throws {
 
     app.migrations.add(CreateSongs())
     try await app.autoMigrate()
+    // 根据迁移列表，检查哪些迁移没有被执行，并且自动应用这些迁移
+    // 通过这行代码，应用会自动降数据库表结构更新为最新定义的迁移状态
     // register routes
-    try routes(app)
+    try routes(app) // 定义应用程序如何响应不同的 HTTP 请求路径
 }
