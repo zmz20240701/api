@@ -13,15 +13,6 @@ struct SongController: RouteCollection {
         songs.post(use: create)
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
     @Sendable // http://0.0.0.0:5001/songs 查询数据库内的数据
     func index(req: Request) throws -> EventLoopFuture<[Song]> {
         return Song.query(on: req.db).all()
@@ -33,4 +24,24 @@ struct SongController: RouteCollection {
         return song.save(on: req.db).transform(to: .ok)
     }
     
+    @Sendable
+    func update(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        let song = try req.content.decode(Song.self);
+        
+        return Song.find(song.id, on: req.db)
+            .unwrap(or: Abort(.notFound))
+            .flatMap {
+                $0.title = song.title
+                return $0.update(on: req.db).transform(to: .ok)
+            }
+    }
+    
+    @Sendable // songs/id
+    func delete(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        Song.find(req.parameters.get("songID"), on: req.db)
+            .unwrap(or: Abort(.notFound))
+            .flatMap {
+                $0.delete(on: req.db)
+            }.transform(to: .ok) // 注意这两个transform的位置
+    }
 }
