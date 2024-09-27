@@ -5,33 +5,29 @@ import Vapor
 
 // configures your application
 public func configure(_ app: Application) async throws {
-    // uncomment to serve files from /Public folder
-    // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
-    
-    // Configure TLS for the client
-    let tlsConfiguration = TLSConfiguration.forClient(certificateVerification: .none)
-    
     // Configure the server
     app.http.server.configuration.port = 5001
     app.http.server.configuration.hostname = "0.0.0.0"
     
+    // Configure TLS for the client
+    var tlsConfig = TLSConfiguration.makeClientConfiguration()
+    tlsConfig.certificateVerification = .none
+    
     // Configure the MySQL database
-    app.databases.use(
-        .mysql(
-            hostname: "8.152.6.116",
-            port: 3306,
-            username: "KEN",
-            password: "000",
-            database: "testdb",
-            tlsConfiguration: tlsConfiguration  // Apply the TLS configuration here
-        ),
-        as: .mysql
+    let mysqlConfiguration = MySQLConfiguration(
+        unixDomainSocketPath: "/var/run/mysqld/mysqld.sock",
+        username: "KEN",
+        password: "000",
+        database: "testdb",
+        tlsConfiguration: tlsConfig
     )
-
+    
+    app.databases.use(.mysql(configuration: mysqlConfiguration), as: .mysql)
+    
+    // Register migrations
     app.migrations.add(CreateSongs())
     try await app.autoMigrate()
-    // 根据迁移列表，检查哪些迁移没有被执行，并且自动应用这些迁移
-    // 通过这行代码，应用会自动降数据库表结构更新为最新定义的迁移状态
-    // register routes
-    try routes(app) // 定义应用程序如何响应不同的 HTTP 请求路径
+    
+    // Register routes
+    try routes(app)
 }
